@@ -1,0 +1,79 @@
+version: "3.3"
+services:
+  db:
+    image: mysql:5.7.22
+    container_name: db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: car_model
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+    expose:
+      - 3308
+    volumes:
+      - .:/app
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: gunicorn --bind 0.0.0.0:8000 app:app --timeout 400
+    environment:
+      - SQLALCHEMY_DATABASE_URI=mysql+mysqldb://root:root@db:8000/car_model
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    restart: always
+
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: "rabbitmq:latest"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      CELERY_BROKER_URL: "amqp://guest:guest@rabbitmq:5672"
+    expose:
+      - 5672
+      - 15672
+
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: worker
+    command: celery -A app.celery_app.celery worker --loglevel=info --pool=prefork --uid=nobody --gid=nogroup
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/app
+    restart: always
+
+  beat:
+      build: .
+      container_name: beat
+      command: celery -A app.celery_app.celery beat --loglevel=debug
+      links:
+        - rabbitmq
+        - worker
+      depends_on:
+        - rabbitmq
+        - worker
+        - db
+      volumes:
+        - .:/app
+
+
+
+
+
+
