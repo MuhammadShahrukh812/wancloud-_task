@@ -1,8 +1,13 @@
 version: "3.3"
+
+volumes:
+  mysql_data:
+
 services:
   db:
     image: mysql:5.7.22
     container_name: db
+    user: root
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
@@ -13,7 +18,8 @@ services:
     expose:
       - 3308
     volumes:
-      - .:/app
+      - mysql_data:/flaskProject
+
 
   app:
     container_name: app
@@ -26,9 +32,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-    depends_on:
-      - db
+      - .:/flaskProject
+
     restart: always
 
 
@@ -55,8 +60,9 @@ services:
     depends_on:
       - rabbitmq
     volumes:
-      - .:/app
+      - .:/flaskProject
     restart: always
+
 
   beat:
       build: .
@@ -70,7 +76,9 @@ services:
         - worker
         - db
       volumes:
-        - .:/app
+        - .:/flaskProject
+      restart:
+        always
 
 
 

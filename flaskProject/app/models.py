@@ -1,5 +1,5 @@
 from app import db
-from sqlalchemy import Integer, String, ForeignKey, Column, DATETIME
+from sqlalchemy import Integer, String, Column
 
 
 class Car_data(db.Model):
