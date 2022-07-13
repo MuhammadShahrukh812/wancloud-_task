@@ -1,5 +1,4 @@
 from flask import Flask
-import pymysql
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -9,6 +8,7 @@ db = SQLAlchemy(app)
 
 from app import views
 from app import models
+
 db.create_all()
 
 if __name__ == '__main__':
